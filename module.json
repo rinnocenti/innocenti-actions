@@ -1,0 +1,32 @@
+{
+  "name": "innocenti-actions",
+  "title": "Innocenti Actions",
+  "description": "<p>Modulo para automatizar triggers</p>",
+  "author": "Renato innocenti",
+  "version": "0.6.4",
+  "minimumCoreVersion": "0.6.6",
+  "compatibleCoreVersion": "0.7.x",
+  "esmodules": [ "main.js" ],
+  "scripts": [],
+  "styles": [],
+  "socket": true,
+  "url": "https://github.com/rinnocenti/innocenti-actions",
+  "manifest": "https://raw.githubusercontent.com/rinnocenti/innocenti-actions/master/module.json",
+  "download": "https://github.com/rinnocenti/innocenti-actions/archive/master.zip",
+  "packs": [
+    {
+      "name": "trigger-journals",
+      "label": "Trigger Journals",
+      "path": "packs/custom-trigger-journals.db",
+      "module": "innocenti-actions",
+      "entity": "JournalEntry"
+    },
+    {
+      "name": "automation-macros",
+      "label": "Automation Macros",
+      "path": "packs/custom-automation-macros.db",
+      "module": "innocenti-actions",
+      "entity": "Macro"
+    }
+  ]
+}
