@@ -186,7 +186,7 @@ export class SetTrigger {
             let actor = targets[i].actor;
             let item = actor.items.find(a => a.name === itemName[i]);
             let itemEb = actor.getEmbeddedEntity("OwnedItem", item.id);
-            if (itemEb.data.quantity > 1) {
+            if (itemEb.data.quantity -1 >= 1) {
                 let update = { _id: item.id, "data.quantity": itemEb.data.quantity - 1 };
                 await actor.updateEmbeddedEntity("OwnedItem", update);
             } else {
