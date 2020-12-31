@@ -42,7 +42,6 @@ export class SetTrigger {
             case 'HitTarget':
                 await this[actions](this.targets, ...multparam);
                 break;
-            case 'PlaySound':
             case 'PlayTrack':
             case 'ResetFlag':
             case 'ResetMyFlag':
@@ -262,16 +261,6 @@ export class SetTrigger {
             permissions._updateObject(event, newpermissions);
         }
     }
-    async PlaySound(soundFile, volume, extention = `ogg`, playlist = `playlist-import/AmbientTracks`, stoptime) {
-        let vol = volume / 100;
-        let src = `${playlist}/${soundFile}.${extention}`;
-        let sound = AudioHelper.play({ src: src, volume: vol, autoplay: true, loop: false }, true);
-        if (stoptime !== undefined && stoptime !== "" && stoptime > 0) {
-            setTimeout(function () {
-                sound.stop();
-            }, stoptime * 1000);
-        }
-    }
     async PlayTrack(playlist, soundFile, stop = false) {
         if (stop) {
             var playl = game.playlists.find(track => track.data.name === soundFile);
@@ -294,9 +283,14 @@ export class SetTrigger {
         for (let i = 0; i < target.length; i++) {
             if (actions[i] === 'open') await canvas.walls.get(target[i]).update({ ds: 1 });
             if (actions[i] === 'close') await canvas.walls.get(target[i]).update({ ds: 0 });
+            if (actions[i] === 'lock') await canvas.walls.get(target[i]).update({ ds: 2 });
             if (actions[i] === 'show') await canvas.walls.get(target[i]).update({ door: 1 });
             if (actions[i] === 'toggle') {
-                let stat = (canvas.walls.get(target[i]).ds === 0) ? 1 : 0;
+                let stat = (canvas.walls.get(target[i]).data.ds === 0) ? 1 : 0;
+                await canvas.walls.get(target[i]).update({ ds: stat });
+            }
+            if (actions[i] === 'toggleLock') {
+                let stat = (canvas.walls.get(target[i]).data.ds === 2) ? 1 : 2;
                 await canvas.walls.get(target[i]).update({ ds: stat });
             }
         }

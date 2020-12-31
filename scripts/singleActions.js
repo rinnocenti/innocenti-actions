@@ -2,13 +2,9 @@ import { SetTrigger } from './actions.js';
 import { DialogActions } from './actionsDialogs.js';
 
 export class MultiActions extends SetTrigger {
-    constructor(userid, tokenid, actions, flags) {
-        super(userid, tokenid);
+    async Check(actions, flags) {
         if (this.CheckFlag(flags)) return;
-        this.action = actions.split('; ');
-        for (let i = 0; i < this.action.length; i++) {
-            this.GMacro(this.action[i]);
-        }
+        this.GMacro(actions);
     }
 }
 
