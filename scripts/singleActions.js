@@ -4,6 +4,7 @@ import { DialogActions } from './actionsDialogs.js';
 export class MultiActions extends SetTrigger {
     async Check(actions, flags) {
         if (this.CheckFlag(flags)) return;
+        if (!this.token && !this.user.isGM) return ui.notifications.error("é preciso possuir um Token selecionado");
         this.GMacro(actions);
     }
 }

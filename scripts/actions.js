@@ -1,11 +1,14 @@
 import { SetTriggerFlag } from './SetTriggerFlag.js';
 import { addTMFX, removeTMFX } from './tmpx.js';
 export class SetTrigger {
-    constructor(userid, tokenid) {
-        this.user = (userid !== '' && userid !== 'None') ? game.users.get(userid) : game.user;
-        this.token = canvas.tokens.get(tokenid);
-        this.actor = game.actors.entities.find(a => a.name === this.token.actor.name);
-        console.log(this);
+    constructor(auser, atoken) {
+        this.user = (auser !== '' && auser !== 'None') ? game.users.get(auser.id) : game.user;
+        if (atoken) {
+            this.token = canvas.tokens.get(atoken.id);
+            this.actor = game.actors.entities.find(a => a.name === this.token.actor.name);
+        }
+        
+        //console.log(this);
     }
     CheckFlag(flags) {
         if (flags !== undefined) {
@@ -185,7 +188,7 @@ export class SetTrigger {
             let actor = targets[i].actor;
             let item = actor.items.find(a => a.name === itemName[i]);
             let itemEb = actor.getEmbeddedEntity("OwnedItem", item.id);
-            if (itemEb.data.quantity -1 >= 1) {
+            if (itemEb.data.quantity - 1 >= 1) {
                 let update = { _id: item.id, "data.quantity": itemEb.data.quantity - 1 };
                 await actor.updateEmbeddedEntity("OwnedItem", update);
             } else {
