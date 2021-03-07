@@ -1,49 +1,57 @@
 import { SetTriggerFlag } from './SetTriggerFlag.js';
 import { addTMFX, removeTMFX } from './tmpx.js';
+const sepFlags = ';'; //Separa as opçãoes do flag não pode ser ponto porque ponto introduz os niveis de flag
+const sepChecks = '; '; // Separa cada grupo de ação
+const sepAction2Param = '.';// separa o action . Parametro. target
+const sepParam = sepFlags;  // depois que tirou o parametro separa cada grupo de alvos
+const sepTargets = sepFlags; // depara os diversos targets
+const sepInParam = '|'; // para separar parametros de cada grupo
 export class SetTrigger {
+    
     constructor(auser, atoken) {
         this.user = (auser !== '' && auser !== 'None') ? game.users.get(auser.id) : game.user;
         if (atoken) {
             this.token = canvas.tokens.get(atoken.id);
-            this.actor = game.actors.entities.find(a => a.name === this.token.actor.name);
-        }
-        
-        //console.log(this);
+            if (this.token.actor !== null) {
+                this.actor = game.actors.find(a => a.id === this.token.actor.id);
+            }
+        }        
+        console.log(this);
     }
     CheckFlag(flags) {
         if (flags !== undefined) {
-            let flag = new SetTriggerFlag(this.user.id, this.token.id, ...flags.split(','));
+            let flag = new SetTriggerFlag(this.user.id, this.token.id, ...flags.split(sepFlags));
             if (flag.GetFlag()) return true;
             flag.SetFlag();
         }
         return false;
     }
-    TargetTokens(targetIdOrName) {
+    async TargetTokens(targetIdOrName) {
         this.targets = [];
         for (let i = 0; i < targetIdOrName.length; i++) {
             if (targetIdOrName[i].toLowerCase() === 'self' || targetIdOrName[i].toLowerCase() === 'player') {
                 this.targets.push(this.token);
             } else if (game.scenes.active.getFlag(`world`, `${targetIdOrName[i]}`)) {
                 try {
-                    let pool = game.scenes.active.getFlag(`world`, `${targetIdOrName[i]}`);
+                    let pool = await game.scenes.active.getFlag(`world`, `${targetIdOrName[i]}`);
                     for (let idt in pool) {
-                        let tk = canvas.tokens.placeables.find(t => t.id === idt);
+                        let tk = await canvas.tokens.placeables.find(t => t.id === idt);
                         if (tk)
                             this.targets.push(tk);
                     }
                 } catch (e) { }
             } else {
-                let t = canvas.tokens.placeables.find(a => a.name === targetIdOrName[i]) || targetIdOrName[i];
+                let t = await canvas.tokens.placeables.find(a => a.name === targetIdOrName[i]) || targetIdOrName[i];
                 this.targets.push(t);
             }
         }
     }
     async ExecuteActions(actions, targets, param) {
         let multparam = (param.length < targets.length) ? Array(targets.length).fill(param[0]) : param;
-        console.log(this);
+        this.targets = targets;
         switch (actions) {
             case 'HitTarget':
-                await this[actions](this.targets, ...multparam);
+                await this[actions](targets, ...multparam);
                 break;
             case 'PlayTrack':
             case 'ResetFlag':
@@ -59,15 +67,15 @@ export class SetTrigger {
         }
     }
     async GMCheck(check) {
-        let checkActions = check.split('; ');
+        let checkActions = check.split(sepChecks);
         for (let i = 0; i < checkActions.length; i++) {
-            let act = checkActions[i].split('.');
+            let act = checkActions[i].split(sepAction2Param);
             this.action = act.shift();
             let actionParm = act.shift();
             let targetName = act[0];
-            this.args = (actionParm !== undefined && actionParm !== '') ? actionParm.split(';') : [actionParm];
+            this.args = (actionParm !== undefined && actionParm !== '') ? actionParm.split(sepParam) : [actionParm];
             if (targetName !== undefined && targetName.toLowerCase() !== 'none' && targetName !== '')
-                this.TargetTokens(targetName.split(','));
+                await this.TargetTokens(targetName.split(sepTargets));
             else
                 this.targets = [this.token];
             await this.ExecuteActions(this.action, this.targets, this.args);
@@ -91,6 +99,23 @@ export class SetTrigger {
                 let dr = canvas.drawings.placeables.find(a => a.data.text === target[i]);
                 if (dr)
                     dr.update({ "text": newLabel });
+            } catch (error) { }
+        }
+    }
+    async DisableRegion(target, act) {
+        if (target === undefined) return ui.notifications.error("Não há um alvo valido");
+        let toggle = (act === 'toggle') ? true : false;
+        let disable = (act === 'true') ? true : false;
+        for (let i = 0; i < target.length; i++) {
+            try {
+                let dr = canvas.drawings.get(target[i]);
+                if (!dr)
+                    dr = canvas.drawings.placeables.find(a => a.data.text === target[i]);
+                if (toggle) {
+                    let dflag = dr.getFlag('multilevel - tokens', 'disabled');
+                    disable = (dflag == true) ? false: true;
+                }
+                dr.SetFlag('multilevel - tokens', 'disabled', disable);
             } catch (error) { }
         }
     }
@@ -132,10 +157,10 @@ export class SetTrigger {
     }
     async HitTarget(targets, actorTrapName, itemTrapName, tokenTrap) {
         if (targets === undefined) return ui.notifications.error("Não há um alvo valido");
-        let actorTrap = (typeof actorTrapName === 'string') ? game.actors.entities.find(t => t.name === actorTrapName) : actorTrapName;
-        let item = actorTrap.items.find(t => t.name === itemTrapName);
+        let actorTrap = (typeof actorTrapName === 'string') ? await game.actors.entities.find(t => t.name === actorTrapName) : actorTrapName;
+        let item = await actorTrap.items.find(t => t.name === itemTrapName);
         if (tokenTrap !== undefined)
-            tokenTrap = canvas.tokens.placeables.find(a => a.name === tokenTrap);
+            tokenTrap = canvas.tokens.placeables.find(a => a.name == tokenTrap);
         else
             tokenTrap = this.token;
         new MidiQOL.TrapWorkflow(actorTrap, item, targets, tokenTrap.center);
@@ -147,7 +172,7 @@ export class SetTrigger {
             let item;
             let actor = targets[i].actor;
 
-            let collection = itemName[i].split(',');
+            let collection = itemName[i].split(sepInParam);
             if (collection.length > 1) {
                 let comp = `${collection[0]}.${collection[1]}`;
                 let itemId = await GetItemIdCompendium(comp, collection[2]);
@@ -222,27 +247,49 @@ export class SetTrigger {
         for (let i = 0; i < target.length; i++) {
             if (typeof target[i] === 'string') return;
             CanvasAnimation.terminateAnimation(`Token.${target[i].id}.animateMovement`);
-            let squeres = sqmove[i].split(',');
+            let squeres = sqmove[i].split(sepInParam);
             newX = (target[i].data.x + (g * parseInt(squeres[0])));
             newY = (target[i].data.y + (g * parseInt(squeres[1])));
             await target[i].update({ x: newX, y: newY });
         }
         await canvas.pan(newX, newY);
     }
-    async MoveRelToken(target, sqmove) {
+    async FwdMove(target, sqmove) {
         let newX = 0;
         let newY = 0;
         let g = canvas.scene.data.grid;
         for (let i = 0; i < target.length; i++) {
             if (typeof target[i] === 'string') return;
             CanvasAnimation.terminateAnimation(`Token.${target[i].id}.animateMovement`);
-            let face = GetDirFace(target[i]);
-            if (!face) ui.notifications.error("Precisa do About-face instalado");
-            let squeres = sqmove[i].split(',');
-            squeres[0] = (face == 90) ? -1 * squeres[0] : squeres[0];
-            squeres[1] = (face == 180) ? -1 * squeres[1] : squeres[1];
-            newX = (target[i].data.x + (g * parseInt(squeres[0])));
-            newY = (target[i].data.y + (g * parseInt(squeres[1])));
+            let face = target[i].data.rotation;
+            let squeres = sqmove[i].split(sepInParam);
+            let mov = [0, 0];
+            if (face > -90 && face < 90 || face >= 0 && face > 270) {
+                ///console.log("baixo");
+                mov[1] = squeres[1];
+                if (squeres[0] != 0)
+                    mov[0] = squeres[0] * -1;
+            }
+            if (face > 0 && face < 180 || face < -180 && face > -360) {
+                ///console.log("esquerda")
+                mov[0] = squeres[1] * -1;
+                if (squeres[0] != 0)
+                    mov[1] = squeres[0] * -1;
+            }
+            if (face < -90 && face > -270 || face > 90 && face < 270) {
+                ///console.log("cima")
+                mov[1] = squeres[1] * -1;
+                if (squeres[0] != 0)
+                    mov[0] = squeres[1];
+            }
+            if (face < 0 && face > -180 || face > 180 && face < 360) {
+                ///console.log("direita")
+                mov[0] = squeres[1];
+                if (squeres[0] != 0)
+                    mov[1] = squeres[1];
+            }
+            newX = (target[i].data.x + (g * parseInt(mov[0])));
+            newY = (target[i].data.y + (g * parseInt(mov[1])));
             await target[i].update({ x: newX, y: newY });
         }
         await canvas.pan(newX, newY);
@@ -302,7 +349,7 @@ export class SetTrigger {
         let oldLang = $(`#polyglot select`).val();
         canvas.tokens.selectObjects({});
         for (let i = 0; i < target.length; i++) {
-            let msg = message[i].split(',');
+            let msg = message[i].split(sepInParam);
             if (msg.length > 1) {
                 message[i] = msg[0];
                 language = msg[1] || 'common';
@@ -369,10 +416,6 @@ async function isUrlFound(url) {
         // console.log(error);
         return false;
     }
-}
-
-async function GetDirFace(token) {
-    return token.getFlag('about-face', 'position.facing');
 }
 
 async function GetItemIdCompendium(cpack, itemName) {

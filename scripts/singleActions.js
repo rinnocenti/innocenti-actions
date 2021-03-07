@@ -3,6 +3,7 @@ import { DialogActions } from './actionsDialogs.js';
 
 export class MultiActions extends SetTrigger {
     async Check(actions, flags) {
+        if (this.actor == null) return;
         if (this.CheckFlag(flags)) return;
         if (!this.token && !this.user.isGM) return ui.notifications.error("é preciso possuir um Token selecionado");
         this.GMacro(actions);
@@ -32,7 +33,7 @@ export class OpenChest extends SetTrigger {
     }
 }
 
-//Checks `dex` 12 `Hidden.Yxyxya.true . PauseGame . Movetoken.xys,xxs.1,2`
+//Checks
 export class Checks extends SetTrigger {
     async Check(skill, dificult, sucess, fail, flags) {
         if (this.CheckFlag(flags)) return;
@@ -43,7 +44,8 @@ export class Checks extends SetTrigger {
             this.dificult = (this.dificult.length < this.skill.length) ? Array(this.skill.length).fill(this.dificult[0]) : this.dificult;
         } else return ui.notifications.error("Nenhum desafio a ser testada");
         for (let i = 0; i < this.skill.length; i++) {
-            if (Object.entries(game.dnd5e.config.skills).map(a => a[0]).includes(this.skill[i])) {
+            if (Object.entries(game.dnd5e.config.skills).map(a => a[0]).includes(this.skill[i]))
+            {
                 this.actor.rollSkill(this.skill[i]).then((result) => {
                     if (result.total >= this.dificult[i]) {
                         this.GMacro(sucess);
@@ -53,6 +55,15 @@ export class Checks extends SetTrigger {
                 });
             } else if (Object.entries(game.dnd5e.config.abilities).map(a => a[0]).includes(this.skill[i])) {
                 this.actor.rollAbilityTest(this.skill[i]).then((result) => {
+                    if (result.total >= this.dificult[i]) {
+                        this.GMacro(sucess);
+                    } else {
+                        this.GMacro(fail);
+                    }
+                });
+            } else if (this.skill[i] === 'jump') {
+                let skill = (this.actor.data.data.skills.ath >= this.actor.data.data.skills.acr) ? this.actor.data.data.skills.ath : this.actor.data.data.skills.acr;
+                this.actor.rollSkill(skill).then((result) => {
                     if (result.total >= this.dificult[i]) {
                         this.GMacro(sucess);
                     } else {
@@ -150,13 +161,14 @@ export class PoolCheck extends SetTrigger {
         if (this.CheckFlag(flags)) return;
         let targets = [];
         try {
-            let pool = game.scenes.active.getFlag(`world`, `${poolname}`);
+            let pool = await game.scenes.active.getFlag(`world`, `${poolname}`);
             for (let idt in pool) {
                 let tk = canvas.tokens.placeables.find(t => t.id === idt);
                 if (tk)
                     targets.push(tk);
             }
         } catch (e) { }
+        console.log(targets);
         let r = new Roll(`${chance}`);
         r.roll();
         await AlertWhispGM(this.token.name, `<strong>Roll a ${r.result}</strong> of ${targets.length}`);
@@ -175,20 +187,24 @@ export class PoolFlags {
         this.remove = (remove !== undefined && remove !== false) ? true : false;
     }
     async AddPool() {
+        if (this.remove == true) return;
         for (let i = 0; i < this.poolname.length; i++) {
             try {
                 if (!game.scenes.active.getFlag(`world`, `${this.poolname[i]}.${this.tokenid}`))
-                    game.scenes.active.setFlag(`world`, `${this.poolname[i]}.${this.tokenid}`, true);
+                   await game.scenes.active.setFlag(`world`, `${this.poolname[i]}.${this.tokenid}`, true);
             } catch (e) { }
-            await AlertWhispGM(this.tokenid, `join into pool ${this.poolname[i]}`);
+            let apool = Object.keys(this.GetPool(this.poolname[0])).length
+            await AlertWhispGM(this.tokenid, `join into pool <strong>${this.poolname[i]}</strong> <br/> Itens no pool <strong>${apool}</strong>`);
         }
     }
     async RemovePool() {
+        if (this.remove == false) return;
         for (let i = 0; i < this.poolname.length; i++) {
             try {
-                game.scenes.active.unsetFlag(`world`, `${this.poolname[i]}.-=${this.tokenid}`);
+                await game.scenes.active.unsetFlag(`world`, `${this.poolname[i]}.-=${this.tokenid}`);
             } catch (e) { }
-            await AlertWhispGM(this.tokenid, `get out pool ${this.poolname[i]}`);
+            let apool = Object.keys(this.GetPool(this.poolname[0])).length
+            await AlertWhispGM(this.tokenid, `get out pool <strong>${this.poolname[i]}</ strong> <br/> Itens no pool <strong>${apool}</strong>`);
         }
     }
 
