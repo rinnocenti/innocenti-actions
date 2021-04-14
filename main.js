@@ -1,4 +1,4 @@
-import * as Actions from './scripts/singleActions.js';
+import * as MultiActions from './scripts/singleActions.js';
 import { SetTriggerFlag } from './scripts/SetTriggerFlag.js';
 
 Hooks.once("init", () => {
@@ -19,11 +19,11 @@ Hooks.once("init", () => {
 });
 window.Innocenti = {
     SetFlag: SetTriggerFlag,
-    Actions: Actions.MultiActions,
-    Checks: Actions.Checks,
-    PassiveCheck: Actions.PassivePerception,
-    OpenDoor: Actions.OpenDoor,
-    CheckItem: Actions.CheckItem,
-    PoolCheck: Actions.PoolCheck,
-    PoolFlags: Actions.PoolFlags,
+    Actions: MultiActions.Actions,
+    Checks: MultiActions.Checks,
+    PassiveCheck: MultiActions.PassivePerception,
+    OpenDoor: MultiActions.OpenDoor,
+    CheckItem: MultiActions.CheckItem,
+    PoolCheck: MultiActions.PoolCheck,
+    PoolFlags: MultiActions.PoolFlags,
 };

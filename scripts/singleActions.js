@@ -1,7 +1,7 @@
 import { SetTrigger } from './actions.js';
 import { DialogActions } from './actionsDialogs.js';
 
-export class MultiActions extends SetTrigger {
+export class Actions extends SetTrigger {
     async Check(actions, flags) {
         if (this.actor == null) return;
         if (this.CheckFlag(flags)) return;

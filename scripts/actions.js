@@ -157,7 +157,7 @@ export class SetTrigger {
     }
     async HitTarget(targets, actorTrapName, itemTrapName, tokenTrap) {
         if (targets === undefined) return ui.notifications.error("Não há um alvo valido");
-        let actorTrap = (typeof actorTrapName === 'string') ? await game.actors.entities.find(t => t.name === actorTrapName) : actorTrapName;
+        let actorTrap = (typeof actorTrapName === 'string') ? game.actors.getName(actorTrapName) : actorTrapName;
         let item = await actorTrap.items.find(t => t.name === itemTrapName);
         if (tokenTrap !== undefined)
             tokenTrap = canvas.tokens.placeables.find(a => a.name == tokenTrap);
