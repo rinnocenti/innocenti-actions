@@ -3,7 +3,7 @@
   "title": "Innocenti Actions",
   "description": "<p>Modulo para automatizar triggers</p>",
   "author": "Renato innocenti",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "minimumCoreVersion": "0.6.6",
   "compatibleCoreVersion": "0.7.x",
   "esmodules": [ "main.js" ],
