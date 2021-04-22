@@ -143,15 +143,44 @@ export class SetTrigger {
     async Hidden(target, hidden) {
         if (target === undefined) return ui.notifications.error("Não há um alvo valido");
         for (let i = 0; i < target.length; i++) {
-            let hhidden = (hidden[i] === false || hidden[i] === 'false') ? false : true;
+            //let hhidden = (hidden[i] === false || hidden[i] === 'false') ? false : true;
             try {
+                let hhidden = false;
+                switch (hidden[i]) {
+                    case "false":
+                        hhidden = false;
+                    case "true":
+                        hhidden = true;
+                    case "toggle":
+                        hhidden = (target[i].data.hidden == false) ? true : false;
+                }
                 target[i].update({ "hidden": hhidden });
             } catch (error) { }
             try {
-                canvas.drawings.get(target[i]).update({ "hidden": hhidden });
+                let d = canvas.drawings.get(target[i]);
+                let hhidden = false;
+                switch (hidden[i]) {
+                    case "false":
+                        hhidden = false;
+                    case "true":
+                        hhidden = true;
+                    case "toggle":
+                        hhidden = (d.data.hidden == false) ? true : false;
+                }
+                d.update({ "hidden": hhidden });
             } catch (error) { }
             try {
-                canvas.tiles.get(target[i]).update({ "hidden": hhidden });
+                let d = canvas.tiles.get(target[i]);
+                let hhidden = false;
+                switch (hidden[i]) {
+                    case "false":
+                        hhidden = false;
+                    case "true":
+                        hhidden = true;
+                    case "toggle":
+                        hhidden = (d.data.hidden == false) ? true : false;
+                }
+                d.update({ "hidden": hhidden });
             } catch (error) { }
         }
     }
